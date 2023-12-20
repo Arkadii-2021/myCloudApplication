@@ -4,13 +4,27 @@ import axios from 'axios';
 import { useSelector } from "react-redux";
 import ChangeAdmin from "./ChangeAdmin";
 import StorageListUser from "./StorageListUser";
+import { useEffect } from 'react';
 
 
 export default function AllUsersInfo() {
 	const authUserInfo = useSelector(state => state.userInfo);
-	const [usersListData, setUsersList] = useState(authUserInfo.allInfoUser.allUsers.filter(function (el) {
-		return el.id !== authUserInfo.allInfoUser.userInfo.userId
-	}));
+	
+	const [usersListData, setUsersList] = useState();
+	
+	useEffect(() => {
+			axios.get(`${process.env.REACT_APP_SERVER_URL}list_all_users/`, 
+			  {auth: {username: newLoginUser['value'].user, password: newLoginUser['value'].password},
+			  headers: { "Content-Type": "application/json" }
+			})
+			  .then(response => {
+				console.log(response.data.allUsers);
+				setUsersList(response.data.allUsers);
+			})
+			  .catch(error => {
+				console.log(error) });
+	}, []);	
+	
 	const newLoginUser = useSelector(state => state.user);
 	const [error, setError] = useState('');
 	
@@ -18,7 +32,7 @@ export default function AllUsersInfo() {
 	    const dateLogin = new Date(lastLoginUser);
 		return dateLogin.toLocaleString();
 	}
-		
+	
 	const deleteUser = (ids) => {
 		axios.delete(`${process.env.REACT_APP_SERVER_URL}user/${ids}/`,
 		  {
@@ -35,7 +49,6 @@ export default function AllUsersInfo() {
 			  toast.error("Не удалось удалить пользователя");
 			  });
     }	
-
 	
 	return (
 	<>  <article style={{fontSize: 16, textTransform: "uppercase", marginBottom: "-18px"}}><b>👨👦 Управление пользователями</b></article>
@@ -57,7 +70,7 @@ export default function AllUsersInfo() {
 		<div className="tbl-content">
 			<table cellPadding="0" cellSpacing="0" border="0">
 				<tbody>
-				  {usersListData.map((user, userIndex) => 
+				  {usersListData && usersListData.map((user, userIndex) => 
 					<tr key={user.id}>
 						<td><div className="file-info"><button style={{cursor: "pointer", marginTop: "0"}} onClick={() => { deleteUser(user.id) }} className="btn-new" >X</button>{user.username}</div></td>
 						<td><span className="list-group-item" >{user.first_name}</span></td>

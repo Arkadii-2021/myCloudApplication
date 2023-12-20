@@ -163,7 +163,7 @@ class FilesListFolder(generics.ListCreateAPIView):
         req_user_name = User.objects.get(username=self.request.user)
         logging.info(f'Обзор списка файлов пользователем: [{req_user_name}]')
         print(f'Обзор списка файлов пользователем: "{req_user_name}"')
-        return self.queryset.filter(user=req_user_name)
+        return self.queryset.filter(user=req_user_name).order_by('id')
 
     def post(self, request, *args, **kwargs):
         req_user_name = User.objects.get(username=self.request.user)
@@ -185,7 +185,7 @@ class UserFilesListFolder(generics.ListCreateAPIView):
         req_user_name = User.objects.get(username=username_storage)
         logging.info(f'Обзор списка файлов пользователя: [{username_storage}]')
         print(f'Обзор списка файлов пользователя: "{username_storage}"')
-        return self.queryset.filter(user=req_user_name)
+        return self.queryset.filter(user=req_user_name).order_by('id')
 
     def post(self, request, *args, **kwargs):
         req_user_name = User.objects.get(username=self.request.user)
@@ -206,17 +206,7 @@ class AuthUser(generics.ListAPIView):
                             timezone=timezone.get_current_timezone())
         req_user_name.last_login = timezone.make_aware(datetime.datetime.now(),
                                                        timezone=timezone.get_current_timezone())
-
         req_user_name.save()
-        all_users = [users for users in User.objects.values("id",
-                                                            "username",
-                                                            "last_login",
-                                                            "email",
-                                                            "is_superuser",
-                                                            "is_active",
-                                                            "first_name",
-                                                            "last_name", )]
-
         is_admin_user = {"auth": True, "userInfo": {"admin": req_user_name.is_superuser,
                                                     "name": req_user_name.username,
                                                     "firstName": req_user_name.first_name,
@@ -224,18 +214,29 @@ class AuthUser(generics.ListAPIView):
                                                     "email": req_user_name.email,
                                                     "lastLogin": req_user_name.last_login,
                                                     "userId": request.user.id,
-                                                    "quantityFiles": quantity_files},
-                         "allUsers": ""}
-
+                                                    "quantityFiles": quantity_files},}
         if req_user_name:
             logging.info(f'Авторизовался пользователь под ником: {req_user_name}')
             print(f'Авторизовался пользователь под ником: {req_user_name}')
-            if req_user_name.is_superuser:
-                is_admin_user['allUsers'] = all_users
-                return Response(is_admin_user)
-            else:
-                is_admin_user['allUsers'] = ''
-                return Response(is_admin_user)
+            return Response(is_admin_user)
+
+
+class AllUsersList(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated, ]
+    authentication_classes = (BasicAuthentication, SessionAuthentication,)
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get(self, request, *args, **kwargs):
+        all_users = [users for users in User.objects.values("id",
+                                                            "username",
+                                                            "last_login",
+                                                            "email",
+                                                            "is_superuser",
+                                                            "is_active",
+                                                            "first_name",
+                                                            "last_name", ) if request.user.id != users['id']]
+        return Response({"allUsers": sorted(all_users, key=lambda d: d['id'])})
 
 
 class CountFiles(generics.ListAPIView):
@@ -245,8 +246,14 @@ class CountFiles(generics.ListAPIView):
     serializer_class = UserSerializer
 
     def get(self, request, *args, **kwargs):
-        quantity_files = len(File.objects.filter(user=self.request.user))
-        return Response({"count_files": quantity_files})
+        other_user = request.GET.get('username')
+        if not other_user:
+            quantity_files = len(File.objects.filter(user=self.request.user))
+            return Response({"count_files": quantity_files})
+        else:
+            req_user_name = User.objects.get(username=other_user)
+            quantity_use_files = len(File.objects.filter(user=req_user_name))
+            return Response({"count_files": quantity_use_files})
 
 
 class UpdateUserParams(generics.RetrieveUpdateDestroyAPIView):

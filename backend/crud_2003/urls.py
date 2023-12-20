@@ -24,7 +24,7 @@ from rest_framework.routers import DefaultRouter
 from files.views import UserViewSet, GroupViewSet, FileDetailAPIView, \
     FileNullFolderApiView, FolderApiView, FoldersListApiView, FilesListFolder, ShareUrlAPIView, download_share, \
     AuthUser, RemoveShareUrlAPIView, UpdateUserParams, UserFilesListFolder, FileDetailUserAPIView, CountFiles, \
-    index
+    index, AllUsersList
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -46,6 +46,7 @@ urlpatterns = [
     path('file/download/', download_share),
     path('folder/list/', FilesListFolder.as_view()),
     path('folder/list/count/', CountFiles.as_view()),
+    path('list_all_users/', AllUsersList.as_view()),
     path('login/', AuthUser.as_view()),
     path('folder/user/list/', UserFilesListFolder.as_view()),
     path('user/<int:pk>/', UpdateUserParams.as_view()),

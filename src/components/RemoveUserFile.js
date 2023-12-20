@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { newUserList } from "../slices/userlistSlice";
 
 
-export default function RemoveFile({newLoginUser, ids, userNameList}) {
+export default function RemoveFile({newLoginUser, ids, userNameList, setCountFilesUser}) {
 	const dispatch = useDispatch();
 	const fileList = useSelector(state => state.userlist);
 	const [error, setError] = useState('');
@@ -23,11 +23,24 @@ export default function RemoveFile({newLoginUser, ids, userNameList}) {
 			  setError(error.response.data.message);
 			  const { value } = fileList;
 			  const filteredNumbers = value.filter((number) => number.id !== ids);
+			  countFilesP();
 			  dispatch(newUserList(filteredNumbers));
 			  toast.success("Файл удалён");
 			  });
         }	
-
+		
+	const countFilesP = () => {
+		axios.get(`${process.env.REACT_APP_SERVER_URL}folder/list/count/?username=${userNameList}`, 
+		  {auth: {username: newLoginUser['value'].user, password: newLoginUser['value'].password},
+		  headers: { "Content-Type": "application/json" }
+	    })
+		  .then(response => {
+			setCountFilesUser(response.data.count_files);
+		})
+		  .catch(error => {
+			console.log(error) });
+	}
+	
 	return (
 		<>
 			<button onClick={(e) => { handleDeleteClick(e) }} className="btn-new" >&#10008;</button>

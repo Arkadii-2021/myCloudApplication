@@ -2,13 +2,14 @@ import { toast } from 'react-toastify';
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useSelector } from "react-redux";
+import { useEffect } from 'react';
 
 
 export default function ChangeAdmin({ isSuperUser, ids, usersListData, setUsersList }) {
 	const newLoginUser = useSelector(state => state.user);
 	const [error, setError] = useState('');
     const [userChange, setChange] = useState(isSuperUser);
-	
+
 	const changeUserRole = () => {
 		axios.put(`${process.env.REACT_APP_SERVER_URL}user/${ids}/`, {"is_superuser": !userChange},
 		  {
@@ -18,11 +19,7 @@ export default function ChangeAdmin({ isSuperUser, ids, usersListData, setUsersL
 			.then(response => {
 			  setError('');
 			  setChange(!userChange);
-			  //setUsersList(usersListData);
- 			  //let copyUsersListData = { ...usersListData };
-			  //let index = usersListData.findIndex((o) => o.id === ids);
-			  //setUsersList([...usersListData, usersListData[index].is_superuser=true]);
-			  //copyUsersListData[index].is_superuser = true;
+			  updateUserList();
 			  toast.success("Статус пользователя изменён");
 		  })
 			.catch(error => {
@@ -32,6 +29,18 @@ export default function ChangeAdmin({ isSuperUser, ids, usersListData, setUsersL
 			  });
     }
 	
+	const updateUserList = () => {
+		axios.get(`${process.env.REACT_APP_SERVER_URL}list_all_users/`, 
+		  {auth: {username: newLoginUser['value'].user, password: newLoginUser['value'].password},
+		  headers: { "Content-Type": "application/json" }
+	    })
+		  .then(response => {
+			setUsersList(response.data.allUsers);
+		})
+		  .catch(error => {
+			console.log(error) });
+	}
+
 	return (
 		<>
 			<button style={{cursor: "pointer"}} onClick={() => { changeUserRole() }} className="btn-new" >{userChange ? "Да" : "Нет"}</button>

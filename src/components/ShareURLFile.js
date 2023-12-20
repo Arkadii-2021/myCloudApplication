@@ -35,7 +35,7 @@ export default function ShareURLFile({newLoginUser, ids}) {
 			headers: { "Content-Type": "application/json" }
 		  })
 			.then(response => {
-			  setError('');
+			  setError('');		  
 			  dispatch(newList(response.data.results));
 		  })
 			.catch(error => {

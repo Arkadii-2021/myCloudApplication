@@ -25,8 +25,6 @@ class FileSerializer(serializers.ModelSerializer):
     filesize = serializers.IntegerField(read_only=True)
     share = serializers.UUIDField(read_only=True)
     url = serializers.URLField(read_only=True)
-    # folder = serializers.IntegerField(read_only=True)
-    # user = serializers.IntegerField(read_only=True)
 
     def create(self, validated_data):
         validated_data['label'] = validated_data.get('file')

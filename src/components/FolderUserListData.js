@@ -23,6 +23,7 @@ export default function FolderUserListData() {
   const [newFileList, setNewFileList] = useState();
   const dispatch = useDispatch();
   const loc = useLocation();
+  const [countFileUser, setCountFilesUser] = useState();
   const [file, setFile] = useState('');
   const [data, getFile] = useState({ name: "", path: "" });
   const [progress, setProgess] = useState(0);
@@ -53,6 +54,20 @@ export default function FolderUserListData() {
 			console.log(error) });
   }, []);
   
+  
+  useEffect(() => {
+		axios.get(`${process.env.REACT_APP_SERVER_URL}folder/list/count/?username=${loc.state.usrNamelist}`, 
+		  {auth: {username: newLoginUser['value'].user, password: newLoginUser['value'].password},
+		  headers: { "Content-Type": "application/json" }
+	    })
+		  .then(response => {
+			setCountFilesUser(response.data.count_files);
+		})
+		  .catch(error => {
+			console.log(error) });
+  }, []);  
+  
+  
   const handleChange = (e) => {
     setProgess(0)
     const file = e.target.files[0];
@@ -65,7 +80,6 @@ export default function FolderUserListData() {
     const formData = new FormData();
     formData.append('file', file);
 	formData.append('user', 1);
-	formData.append('folder', 1);
     axios.post(`${process.env.REACT_APP_SERVER_URL}folder/user/list/?username=${loc.state.usrNamelist}`, formData, {
 		  auth: {username: newLoginUser['value'].user, password: newLoginUser['value'].password},
 		  headers: {'Content-Type': 'multipart/form-data'},
@@ -79,6 +93,7 @@ export default function FolderUserListData() {
 		  }).then(res => {
 		  console.log(res);
 		  updatePageListFiles();
+		  countFilesP();
 		  getFile({
 			name: res.data.label,
 			path: res.data.file
@@ -111,9 +126,20 @@ export default function FolderUserListData() {
 	}
 	
 	const fileListResult = fileList.value;
-
+	
+	const countFilesP = () => {
+		axios.get(`${process.env.REACT_APP_SERVER_URL}folder/list/count/?username=${loc.state.usrNamelist}`, 
+		  {auth: {username: newLoginUser['value'].user, password: newLoginUser['value'].password},
+		  headers: { "Content-Type": "application/json" }
+	    })
+		  .then(response => {
+			setCountFilesUser(response.data.count_files);
+		})
+		  .catch(error => {
+			console.log(error) });
+	}
 	return (
-		<>
+		<> {newFileList && <h4>Количество файлов: {countFileUser}</h4>}
 			<div className="tbl-header">
 				<table cellPadding="0" cellSpacing="0" border="0">
 				  <thead>
@@ -138,7 +164,7 @@ export default function FolderUserListData() {
 						  <td><span className="list-group-item" >{filename.url ? <CopyShareUserURLFile url={filename.url} ids={filename.id} newFileListP={newFileList} loc={loc.state.usrNamelist} /> : <ShareUserURLFile ids={filename.id} newLoginUser={newLoginUser} newFileListP={newFileList} loc={loc.state.usrNamelist} />}</span></td>
 						  <td><span className="list-group-item" >{filename.comment}</span></td>
 						  <td><span className="list-group-item" >{newFileList ? <RenameUserFile newLoginUser={newLoginUser} newFileListP={newFileList} ids={filename.id} folderId={filename.folder} isfileName={filename.label} isfileComment={filename.comment} userNameList={loc.state.usrNamelist} /> : null}</span></td>
-						  <td><span className="list-group-item" >{newFileList ? <RemoveUserFile newLoginUser={newLoginUser} newFileListP={newFileList} ids={filename.id} userNameList={loc.state.usrNamelist} /> : null}</span></td>
+						  <td><span className="list-group-item" >{newFileList ? <RemoveUserFile newLoginUser={newLoginUser} newFileListP={newFileList} ids={filename.id} userNameList={loc.state.usrNamelist} setCountFilesUser={setCountFilesUser} /> : null}</span></td>
 					  </tr>)}
 				  </tbody>
 				</table>
