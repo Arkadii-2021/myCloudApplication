@@ -193,13 +193,12 @@ class UserFilesListFolder(generics.ListCreateAPIView):
         return self.create(request, *args, **kwargs)
 
 
-class AuthUser(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated, ]
+class AuthUser(generics.ListCreateAPIView):
     authentication_classes = (BasicAuthentication, SessionAuthentication,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         quantity_files = len(File.objects.filter(user=self.request.user))
         req_user_name = User.objects.get(username=self.request.user)
         timezone.make_aware(datetime.datetime.now(),
